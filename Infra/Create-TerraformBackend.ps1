@@ -19,7 +19,8 @@
     The Azure region for the resources. Default: westus3
 
 .PARAMETER AppRegistrationName
-    The name of the App registration to grant Storage Blob Data Contributor access.
+    The name of the App registration to grant Storage Blob Data Reader access.
+    An additional App registration with 'Infra' appended will be granted Storage Blob Data Contributor.
     If not provided, only the current user will be granted access.
 
 .EXAMPLE
@@ -78,54 +79,86 @@ Write-Host "  Location:         $Location"
 Write-Host ""
 
 # Create Resource Group
-Write-Host "Creating resource group '$ResourceGroupName'..." -ForegroundColor Yellow
-az group create `
-    --name $ResourceGroupName `
-    --location $Location `
-    --output none
+Write-Host "Checking resource group '$ResourceGroupName'..." -ForegroundColor Yellow
+$rgExists = az group exists --name $ResourceGroupName
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to create resource group." -ForegroundColor Red
-    exit 1
+if ($rgExists -eq "true") {
+    Write-Host "Resource group already exists." -ForegroundColor Green
 }
-Write-Host "Resource group created successfully." -ForegroundColor Green
+else {
+    Write-Host "Creating resource group '$ResourceGroupName'..." -ForegroundColor Yellow
+    az group create `
+        --name $ResourceGroupName `
+        --location $Location `
+        --output none
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to create resource group." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Resource group created successfully." -ForegroundColor Green
+}
 
 # Create Storage Account
-Write-Host "Creating storage account '$StorageAccountName'..." -ForegroundColor Yellow
-Write-Host "  (This may take a few minutes)" -ForegroundColor Gray
-
-az storage account create `
+Write-Host "Checking storage account '$StorageAccountName'..." -ForegroundColor Yellow
+$storageAccountCheck = az storage account show `
     --name $StorageAccountName `
     --resource-group $ResourceGroupName `
-    --location $Location `
-    --sku Standard_LRS `
-    --kind StorageV2 `
-    --min-tls-version TLS1_2 `
-    --allow-blob-public-access false `
-    --https-only true `
-    --output none
+    2>$null
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to create storage account. The name '$StorageAccountName' may not be globally unique." -ForegroundColor Red
-    Write-Host "Try a different storage account name using: -StorageAccountName 'youruniquename'" -ForegroundColor Yellow
-    exit 1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Storage account already exists." -ForegroundColor Green
 }
-Write-Host "Storage account created successfully." -ForegroundColor Green
+else {
+    Write-Host "Creating storage account '$StorageAccountName'..." -ForegroundColor Yellow
+    Write-Host "  (This may take a few minutes)" -ForegroundColor Gray
+
+    az storage account create `
+        --name $StorageAccountName `
+        --resource-group $ResourceGroupName `
+        --location $Location `
+        --sku Standard_LRS `
+        --kind StorageV2 `
+        --min-tls-version TLS1_2 `
+        --allow-blob-public-access false `
+        --https-only true `
+        --output none
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to create storage account. The name '$StorageAccountName' may not be globally unique." -ForegroundColor Red
+        Write-Host "Try a different storage account name using: -StorageAccountName 'youruniquename'" -ForegroundColor Yellow
+        exit 1
+    }
+    Write-Host "Storage account created successfully." -ForegroundColor Green
+}
 
 # Create Blob Container
-Write-Host "Creating blob container '$ContainerName'..." -ForegroundColor Yellow
+Write-Host "Checking blob container '$ContainerName'..." -ForegroundColor Yellow
 
-az storage container create `
+az storage container show `
     --name $ContainerName `
     --account-name $StorageAccountName `
     --auth-mode login `
-    --output none
+    --output none 2>$null
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to create blob container." -ForegroundColor Red
-    exit 1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Blob container already exists." -ForegroundColor Green
 }
-Write-Host "Blob container created successfully." -ForegroundColor Green
+else {
+    Write-Host "Creating blob container '$ContainerName'..." -ForegroundColor Yellow
+
+    az storage container create `
+        --name $ContainerName `
+        --account-name $StorageAccountName `
+        --auth-mode login `
+        --output none
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to create blob container." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Blob container created successfully." -ForegroundColor Green
+}
 
 # Get storage account ID for role assignments
 $storageAccountId = az storage account show `
@@ -133,8 +166,9 @@ $storageAccountId = az storage account show `
     --resource-group $ResourceGroupName `
     --query id -o tsv
 
-# Assign Storage Blob Data Contributor role to App Registration if specified
+# Assign Storage Blob Data roles to App Registrations if specified
 if ($AppRegistrationName) {
+    # Grant Storage Blob Data Reader to the main app registration
     Write-Host "Looking up App Registration '$AppRegistrationName'..." -ForegroundColor Yellow
     
     $appRegistration = az ad app list --display-name $AppRegistrationName 2>&1 | ConvertFrom-Json
@@ -153,10 +187,10 @@ if ($AppRegistrationName) {
         if ($servicePrincipal -and $servicePrincipal.Count -gt 0) {
             $servicePrincipalId = $servicePrincipal[0].id
             
-            Write-Host "Assigning 'Storage Blob Data Contributor' role to '$AppRegistrationName'..." -ForegroundColor Yellow
+            Write-Host "Assigning 'Storage Blob Data Reader' role to '$AppRegistrationName'..." -ForegroundColor Yellow
             
             az role assignment create `
-                --role "Storage Blob Data Contributor" `
+                --role "Storage Blob Data Reader" `
                 --assignee $servicePrincipalId `
                 --scope $storageAccountId `
                 --output none 2>$null
@@ -175,6 +209,51 @@ if ($AppRegistrationName) {
     }
     else {
         Write-Host "App Registration '$AppRegistrationName' not found." -ForegroundColor Red
+        Write-Host "Please verify the name and try again." -ForegroundColor Yellow
+    }
+
+    # Grant Storage Blob Data Contributor to the Infra app registration
+    $infraAppRegistrationName = "${AppRegistrationName}Infra"
+    Write-Host "Looking up App Registration '$infraAppRegistrationName'..." -ForegroundColor Yellow
+    
+    $infraAppRegistration = az ad app list --display-name $infraAppRegistrationName 2>&1 | ConvertFrom-Json
+    
+    if ($infraAppRegistration -and $infraAppRegistration.Count -gt 0) {
+        if ($infraAppRegistration.Count -gt 1) {
+            Write-Host "Warning: Multiple app registrations found with name '$infraAppRegistrationName'. Using the first one." -ForegroundColor Yellow
+        }
+        
+        $infraAppId = $infraAppRegistration[0].appId
+        
+        # Get the service principal for the infra app registration
+        Write-Host "Looking up Service Principal for Infra App Registration..." -ForegroundColor Yellow
+        $infraServicePrincipal = az ad sp list --filter "appId eq '$infraAppId'" 2>&1 | ConvertFrom-Json
+        
+        if ($infraServicePrincipal -and $infraServicePrincipal.Count -gt 0) {
+            $infraServicePrincipalId = $infraServicePrincipal[0].id
+            
+            Write-Host "Assigning 'Storage Blob Data Contributor' role to '$infraAppRegistrationName'..." -ForegroundColor Yellow
+            
+            az role assignment create `
+                --role "Storage Blob Data Contributor" `
+                --assignee $infraServicePrincipalId `
+                --scope $storageAccountId `
+                --output none 2>$null
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Role assignment created successfully for '$infraAppRegistrationName'." -ForegroundColor Green
+            }
+            else {
+                Write-Host "Role assignment may already exist or requires elevated permissions." -ForegroundColor Yellow
+            }
+        }
+        else {
+            Write-Host "Service Principal not found for App Registration '$infraAppRegistrationName'." -ForegroundColor Red
+            Write-Host "You may need to create a Service Principal for this App Registration first." -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "App Registration '$infraAppRegistrationName' not found." -ForegroundColor Red
         Write-Host "Please verify the name and try again." -ForegroundColor Yellow
     }
 }
