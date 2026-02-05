@@ -65,6 +65,8 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
+        env:
+          DOTNET_BUILD_CONFIGURATION: Release
 
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish/backend --no-build

@@ -189,16 +189,16 @@ function Create-AppRegistrationWithRoles {
         $graphSp = az ad sp list --filter "appId eq '00000003-0000-0000-c000-000000000000'" --query "[0]" | ConvertFrom-Json
         
         # Find the required permissions
-        $directoryReadAllPermission = $graphSp.appRoles | Where-Object { $_.value -eq "Directory.Read.All" } | Select-Object -First 1
+        $directoryReadWriteAllPermission = $graphSp.appRoles | Where-Object { $_.value -eq "Directory.ReadWrite.All" } | Select-Object -First 1
         $roleManagementPermission = $graphSp.appRoles | Where-Object { $_.value -eq "RoleManagement.ReadWrite.Directory" } | Select-Object -First 1
         
-        if ($directoryReadAllPermission -and $roleManagementPermission) {
+        if ($directoryReadWriteAllPermission -and $roleManagementPermission) {
             # Add the required resource accesses
             $requiredResourceAccess = @{
                 resourceAppId = "00000003-0000-0000-c000-000000000000"
                 resourceAccess = @(
                     @{
-                        id = $directoryReadAllPermission.id
+                        id = $directoryReadWriteAllPermission.id
                         type = "Role"
                     },
                     @{
@@ -379,7 +379,7 @@ if ($infraApp) {
     Write-Host "  Tenant ID: $TenantId" -ForegroundColor White
     Write-Host "  Subscription ID: $SubscriptionId" -ForegroundColor White
     Write-Host "  Roles: Contributor, User Access Administrator" -ForegroundColor White
-    Write-Host "  Graph Permissions: Directory.Read.All, RoleManagement.ReadWrite.Directory" -ForegroundColor White
+    Write-Host "  Graph Permissions: Directory.ReadWrite.All, RoleManagement.ReadWrite.Directory" -ForegroundColor White
 }
 
 Write-Host "`nFederated Credentials configured for:" -ForegroundColor Yellow
