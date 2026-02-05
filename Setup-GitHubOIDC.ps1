@@ -206,9 +206,12 @@ function Create-AppRegistrationWithRoles {
                         type = "Role"
                     }
                 )
-            } | ConvertTo-Json -Depth 10 -Compress
-
-            az ad app update --id $AppObjectId --required-resource-accesses "[$requiredResourceAccess]" | Out-Null
+            }
+            
+            $requiredResourceAccessJson = "[$($requiredResourceAccess | ConvertTo-Json -Depth 10 -Compress)]"
+            
+            # Use the @- pattern to pass JSON via stdin to avoid PowerShell quoting issues
+            $requiredResourceAccessJson | az ad app update --id $AppObjectId --required-resource-accesses "@-" | Out-Null
             Write-Host "Added Microsoft Graph API permissions" -ForegroundColor Green
             Write-Host "`nIMPORTANT: Admin consent is required for these permissions." -ForegroundColor Magenta
             Write-Host "Please grant admin consent at: https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnAPI/appId/$ClientId" -ForegroundColor Magenta

@@ -42,18 +42,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ${{ env.FRONTEND_PROJECT_PATH }}/package-lock.json
 
-      - name: Restore .NET dependencies
-        run: dotnet restore
-
-      - name: Build backend
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Test backend
-        run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
-
-      - name: Publish backend
-        run: dotnet publish --configuration Release --output ./publish/backend --no-build
-
       - name: Install frontend dependencies
         working-directory: ${{ env.FRONTEND_PROJECT_PATH }}
         run: npm ci
@@ -65,6 +53,19 @@ jobs:
       - name: Build frontend
         working-directory: ${{ env.FRONTEND_PROJECT_PATH }}
         run: npm run build
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish/backend --no-build
+
 
       - name: Upload backend artifact
         uses: actions/upload-artifact@v4
