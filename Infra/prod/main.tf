@@ -53,9 +53,6 @@ module "backend_container_app" {
   env_vars = {
     # Run EF Core migrations on startup for Azure deployments
     RunMigrationsOnStartup = "true"
-  }
-
-  secret_env_vars = {
     # Aspire uses ConnectionStrings__<key> naming convention
     ConnectionStrings__Database = module.sql.connection_string
   }
