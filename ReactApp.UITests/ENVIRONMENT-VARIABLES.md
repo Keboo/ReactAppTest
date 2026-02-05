@@ -5,7 +5,7 @@
 | Variable | Description | Default | Examples |
 |----------|-------------|---------|----------|
 | `TEST_BASE_URL` | Base URL of the application to test | `https://ReactApp.dev.localhost:7147` | `https://localhost:7239`<br>`https://staging.example.com` |
-| `HEADED` | Run browser in visible mode (not headless) | `false` | `1` or `true` |
+| `HEADLESS` | Run browser in headless mode (no visible window) | `true` | `false` or `0` for headed mode |
 | `SLOW_MO` | Delay in milliseconds between actions | `0` | `500`, `1000` |
 | `BROWSER` | Browser to use for tests | `chromium` | `chromium`, `firefox`, `webkit` |
 
@@ -13,7 +13,7 @@
 
 ### Local Development (watch tests execute)
 ```powershell
-$env:HEADED = "1"
+$env:HEADLESS = "false"
 $env:SLOW_MO = "500"
 dotnet test
 ```
@@ -26,7 +26,7 @@ dotnet test
 
 ### Debug Specific Test
 ```powershell
-$env:HEADED = "1"
+$env:HEADLESS = "false"
 $env:SLOW_MO = "1000"
 dotnet test --filter "FullyQualifiedName~CompleteQAWorkflow"
 ```
@@ -40,7 +40,7 @@ dotnet test
 ### Test with Firefox
 ```powershell
 $env:BROWSER = "firefox"
-$env:HEADED = "1"
+$env:HEADLESS = "false"
 dotnet test
 ```
 
@@ -49,7 +49,7 @@ dotnet test
 After testing, you may want to clear the variables:
 
 ```powershell
-Remove-Item Env:\HEADED
+Remove-Item Env:\HEADLESS
 Remove-Item Env:\SLOW_MO
 Remove-Item Env:\TEST_BASE_URL
 ```

@@ -124,13 +124,3 @@ jobs:
           TF_VAR_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID_INFRA }}
           TF_VAR_TENANT_ID: ${{ secrets.ARM_TENANT_ID_INFRA }}
           TF_VAR_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID_INFRA }}
-
-      - name: Get Terraform Outputs
-        id: terraform-outputs
-        working-directory: Infra
-        run: |
-          echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
-          echo "backend_container_app_name=$(terraform output -raw backend_container_app_name)" >> $GITHUB_OUTPUT
-          echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
-          echo "static_web_app_name=$(terraform output -raw static_web_app_name)" >> $GITHUB_OUTPUT
-          echo "static_web_app_api_key=$(terraform output -raw static_web_app_api_key)" >> $GITHUB_OUTPUT

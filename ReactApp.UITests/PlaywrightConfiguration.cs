@@ -16,16 +16,17 @@ public static class PlaywrightConfiguration
     public static float SignalRTimeout => 5000;
     
     /// <summary>
-    /// Whether to run browser in headed mode (visible window)
-    /// Can be overridden via environment variable HEADED (set to "1" or "true")
+    /// Whether to run browser in headless mode (no visible window)
+    /// Defaults to true. Can be overridden via environment variable HEADLESS (set to "0" or "false" for headed mode)
     /// </summary>
     public static bool Headless
     {
         get
         {
             var envValue = Environment.GetEnvironmentVariable("HEADLESS");
-            return envValue == "1" ||
-                   envValue?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
+            // Default to headless (true) unless explicitly set to false
+            return envValue != "0" &&
+                   !string.Equals(envValue, "false", StringComparison.OrdinalIgnoreCase);
         }
     }
     

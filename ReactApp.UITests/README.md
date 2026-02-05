@@ -85,19 +85,19 @@ By default, tests run in **headless mode** (no visible browser window).
 
 **PowerShell:**
 ```powershell
-$env:HEADED = "1"
+$env:HEADLESS = "false"
 dotnet test
 ```
 
 **Command Prompt:**
 ```cmd
-set HEADED=1
+set HEADLESS=false
 dotnet test
 ```
 
 **Bash/Linux:**
 ```bash
-export HEADED=1
+export HEADLESS=false
 dotnet test
 ```
 
@@ -150,7 +150,7 @@ dotnet test
 
 ```powershell
 # Run in headed mode with slow motion against custom URL
-$env:HEADED = "1"
+$env:HEADLESS = "false"
 $env:SLOW_MO = "500"
 $env:TEST_BASE_URL = "https://staging.example.com"
 dotnet test
@@ -203,15 +203,15 @@ dotnet test --logger "console;verbosity=detailed"
 ### Run in Headed Mode (See Browser Window)
 
 ```powershell
-$env:HEADED = "1"
+$env:HEADLESS = "false"
 dotnet test
 ```
 
 ### Slow Motion (Watch Actions Execute)
 
 ```powershell
-$env:SLOW_MO = "1000"  # 1 second delay between actions
-$env:HEADED = "1"      # Must use headed mode to see slow motion
+$env:SLOW_MO = "1000"     # 1 second delay between actions
+$env:HEADLESS = "false"  # Must use headed mode to see slow motion
 dotnet test
 ```
 

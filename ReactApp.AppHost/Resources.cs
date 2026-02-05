@@ -259,7 +259,9 @@ public static class Resources
                     EnvironmentVariables =
                     {
                         { "TEST_BASE_URL", baseUrlInput.Value },
-                        { "HEADED", headlessInput.Value }
+                        // Invert the boolean: if headless is True, don't set HEADLESS (defaults to true)
+                        // if headless is False, set HEADLESS=false to run in headed mode
+                        { "HEADLESS", headlessInput.Value?.Equals(bool.FalseString, StringComparison.OrdinalIgnoreCase) == true ? "false" : "" }
                     }
                 };
 
