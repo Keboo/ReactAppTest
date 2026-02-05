@@ -18,11 +18,18 @@
 .PARAMETER Location
     The Azure region for the resources. Default: westus3
 
+.PARAMETER AppRegistrationName
+    The name of the App registration to grant Storage Blob Data Contributor access.
+    If not provided, only the current user will be granted access.
+
 .EXAMPLE
     .\Create-TerraformBackend.ps1
 
 .EXAMPLE
     .\Create-TerraformBackend.ps1 -StorageAccountName "myuniquestorageacct" -Location "westus2"
+
+.EXAMPLE
+    .\Create-TerraformBackend.ps1 -AppRegistrationName "MyGitHubOIDC"
 #>
 
 [CmdletBinding()]
@@ -37,7 +44,10 @@ param(
     [string]$ContainerName = "terraform",
 
     [Parameter()]
-    [string]$Location = "westus3"
+    [string]$Location = "westus3",
+
+    [Parameter()]
+    [string]$AppRegistrationName
 )
 
 $ErrorActionPreference = "Stop"
@@ -117,16 +127,63 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "Blob container created successfully." -ForegroundColor Green
 
+# Get storage account ID for role assignments
+$storageAccountId = az storage account show `
+    --name $StorageAccountName `
+    --resource-group $ResourceGroupName `
+    --query id -o tsv
+
+# Assign Storage Blob Data Contributor role to App Registration if specified
+if ($AppRegistrationName) {
+    Write-Host "Looking up App Registration '$AppRegistrationName'..." -ForegroundColor Yellow
+    
+    $appRegistration = az ad app list --display-name $AppRegistrationName 2>&1 | ConvertFrom-Json
+    
+    if ($appRegistration -and $appRegistration.Count -gt 0) {
+        if ($appRegistration.Count -gt 1) {
+            Write-Host "Warning: Multiple app registrations found with name '$AppRegistrationName'. Using the first one." -ForegroundColor Yellow
+        }
+        
+        $appId = $appRegistration[0].appId
+        
+        # Get the service principal for the app registration
+        Write-Host "Looking up Service Principal for App Registration..." -ForegroundColor Yellow
+        $servicePrincipal = az ad sp list --filter "appId eq '$appId'" 2>&1 | ConvertFrom-Json
+        
+        if ($servicePrincipal -and $servicePrincipal.Count -gt 0) {
+            $servicePrincipalId = $servicePrincipal[0].id
+            
+            Write-Host "Assigning 'Storage Blob Data Contributor' role to '$AppRegistrationName'..." -ForegroundColor Yellow
+            
+            az role assignment create `
+                --role "Storage Blob Data Contributor" `
+                --assignee $servicePrincipalId `
+                --scope $storageAccountId `
+                --output none 2>$null
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Role assignment created successfully for '$AppRegistrationName'." -ForegroundColor Green
+            }
+            else {
+                Write-Host "Role assignment may already exist or requires elevated permissions." -ForegroundColor Yellow
+            }
+        }
+        else {
+            Write-Host "Service Principal not found for App Registration '$AppRegistrationName'." -ForegroundColor Red
+            Write-Host "You may need to create a Service Principal for this App Registration first." -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "App Registration '$AppRegistrationName' not found." -ForegroundColor Red
+        Write-Host "Please verify the name and try again." -ForegroundColor Yellow
+    }
+}
+
 # Assign Storage Blob Data Contributor role to current user for OIDC auth
 Write-Host "Assigning 'Storage Blob Data Contributor' role to current user..." -ForegroundColor Yellow
 
 $currentUserId = az ad signed-in-user show --query id -o tsv 2>$null
 if ($currentUserId) {
-    $storageAccountId = az storage account show `
-        --name $StorageAccountName `
-        --resource-group $ResourceGroupName `
-        --query id -o tsv
-
     az role assignment create `
         --role "Storage Blob Data Contributor" `
         --assignee $currentUserId `
