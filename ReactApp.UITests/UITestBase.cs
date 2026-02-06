@@ -128,14 +128,14 @@ public abstract class UITestBase : IAsyncDisposable
         try
         {
             var testContext = TestContext.Current;
-            if (testContext?.Result?.Status is not Status.Failed || Page is null || Page.IsClosed)
+            if (testContext?.Execution.Result?.Exception is null || Page is null || Page.IsClosed)
                 return;
 
             var screenshotDir = PlaywrightConfiguration.ScreenshotDirectory;
             Directory.CreateDirectory(screenshotDir);
 
-            var testName = testContext.TestDetails.TestName;
-            var className = testContext.TestDetails.TestClass.Name;
+            var testName = testContext.Metadata.TestName;
+            var className = testContext.Metadata.TestDetails.Class.ClassType.FullName;
             var sanitised = string.Join("_", $"{className}.{testName}".Split(Path.GetInvalidFileNameChars()));
             var screenshotPath = Path.Combine(screenshotDir, $"{sanitised}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.png");
 
