@@ -42,4 +42,20 @@ public static class PlaywrightConfiguration
             return float.TryParse(envValue, out var value) ? value : 0;
         }
     }
+
+    /// <summary>
+    /// Directory where failure screenshots are saved.
+    /// Defaults to TestResults/screenshots relative to the current directory.
+    /// Can be overridden via environment variable SCREENSHOT_DIR.
+    /// </summary>
+    public static string ScreenshotDirectory
+    {
+        get
+        {
+            var envValue = Environment.GetEnvironmentVariable("SCREENSHOT_DIR");
+            return !string.IsNullOrWhiteSpace(envValue)
+                ? envValue
+                : Path.Combine(Directory.GetCurrentDirectory(), "TestResults", "screenshots");
+        }
+    }
 }

@@ -119,7 +119,38 @@ public abstract class UITestBase : IAsyncDisposable
     [After(Test)]
     public async Task TearDownAsync()
     {
+        await CaptureScreenshotOnFailureAsync();
         await DisposeAsync();
+    }
+
+    private async Task CaptureScreenshotOnFailureAsync()
+    {
+        try
+        {
+            var testContext = TestContext.Current;
+            if (testContext?.Result?.Status is not Status.Failed || Page is null || Page.IsClosed)
+                return;
+
+            var screenshotDir = PlaywrightConfiguration.ScreenshotDirectory;
+            Directory.CreateDirectory(screenshotDir);
+
+            var testName = testContext.TestDetails.TestName;
+            var className = testContext.TestDetails.TestClass.Name;
+            var sanitised = string.Join("_", $"{className}.{testName}".Split(Path.GetInvalidFileNameChars()));
+            var screenshotPath = Path.Combine(screenshotDir, $"{sanitised}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.png");
+
+            await Page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = screenshotPath,
+                FullPage = true
+            });
+
+            Console.WriteLine($"Screenshot saved to: {screenshotPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to capture screenshot: {ex.Message}");
+        }
     }
 
 

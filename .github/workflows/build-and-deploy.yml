@@ -68,6 +68,15 @@ jobs:
         env:
           DOTNET_BUILD_CONFIGURATION: Release
 
+      - name: Upload test failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-screenshots
+          path: '**/TestResults/screenshots/*.png'
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish/backend --no-build
 
