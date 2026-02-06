@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Text;
+
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
@@ -6,6 +9,7 @@ using Deque.AxeCore.Commons;
 using Deque.AxeCore.Playwright;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 using ReactApp.AppHost;
 using ReactApp.UITests.PageObjects;
@@ -38,6 +42,8 @@ public abstract class UITestBase : IAsyncDisposable
     private IPlaywright? _playwright;
     private IBrowser? _browser;
     private IBrowserContext? _context;
+    private CancellationTokenSource? _logCts;
+    private ConcurrentQueue<string> _logLines = new();
 
     protected IPage Page { get; private set; } = null!;
     protected IBrowser Browser => _browser!;
@@ -104,6 +110,8 @@ public abstract class UITestBase : IAsyncDisposable
     {
         await BeforeTestSetupAsync();
 
+        StartCollectingLogs();
+
         _playwright = await Playwright.CreateAsync();
         _browser = await CreateBrowserAsync(_playwright);
         _context = await CreateBrowserContextAsync(_browser, StateId is not null ? $"{StateId}_{STATE_FILE}" : null);
@@ -119,7 +127,9 @@ public abstract class UITestBase : IAsyncDisposable
     [After(Test)]
     public async Task TearDownAsync(TestContext testContext)
     {
+        StopCollectingLogs();
         await CaptureScreenshotOnFailureAsync(testContext);
+        await CaptureLogsOnFailureAsync(testContext);
         await DisposeAsync();
     }
 
@@ -152,7 +162,81 @@ public abstract class UITestBase : IAsyncDisposable
         }
     }
 
+    private void StartCollectingLogs()
+    {
+        _logLines = new ConcurrentQueue<string>();
+        _logCts = new CancellationTokenSource();
 
+        var loggerService = _aspireAppHost.Services.GetRequiredService<ResourceLoggerService>();
+        var appModel = _aspireAppHost.Services.GetRequiredService<DistributedApplicationModel>();
+
+        foreach (var resource in appModel.Resources)
+        {
+            var resourceName = resource.Name;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await foreach (var batch in loggerService.WatchAsync(resourceName)
+                        .WithCancellation(_logCts.Token))
+                    {
+                        foreach (var line in batch)
+                        {
+                            var prefix = line.IsErrorMessage ? "ERR" : "OUT";
+                            _logLines.Enqueue($"[{resourceName}] [{prefix}] {line.Content}");
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected when test ends
+                }
+            });
+        }
+    }
+
+    private void StopCollectingLogs()
+    {
+        try
+        {
+            _logCts?.Cancel();
+            _logCts?.Dispose();
+            _logCts = null;
+        }
+        catch { }
+    }
+
+    private Task CaptureLogsOnFailureAsync(TestContext testContext)
+    {
+        try
+        {
+            if (testContext.Execution.Result?.State is not TestState.Failed || _logLines.IsEmpty)
+                return Task.CompletedTask;
+
+            var logsDir = PlaywrightConfiguration.LogsDirectory;
+            Directory.CreateDirectory(logsDir);
+
+            var testName = testContext.Metadata.TestName;
+            var className = testContext.Metadata.TestDetails.Class.ClassType.FullName;
+            var sanitised = string.Join("_", $"{className}.{testName}".Split(Path.GetInvalidFileNameChars()));
+            var logPath = Path.Combine(logsDir, $"{sanitised}_{CreateUniqueId()}.log");
+
+            var sb = new StringBuilder();
+            while (_logLines.TryDequeue(out var line))
+            {
+                sb.AppendLine(line);
+            }
+
+            File.WriteAllText(logPath, sb.ToString());
+            Console.WriteLine($"Aspire logs saved to: {logPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to capture Aspire logs: {ex.Message}");
+        }
+
+        return Task.CompletedTask;
+    }
 
     protected static async Task<IBrowser> CreateBrowserAsync(IPlaywright playwright)
     {

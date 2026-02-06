@@ -58,4 +58,20 @@ public static class PlaywrightConfiguration
                 : Path.Combine(Directory.GetCurrentDirectory(), "TestResults", "screenshots");
         }
     }
+
+    /// <summary>
+    /// Directory where failure Aspire host logs are saved.
+    /// Defaults to TestResults/logs relative to the current directory.
+    /// Can be overridden via environment variable LOGS_DIR.
+    /// </summary>
+    public static string LogsDirectory
+    {
+        get
+        {
+            var envValue = Environment.GetEnvironmentVariable("LOGS_DIR");
+            return !string.IsNullOrWhiteSpace(envValue)
+                ? envValue
+                : Path.Combine(Directory.GetCurrentDirectory(), "TestResults", "logs");
+        }
+    }
 }
