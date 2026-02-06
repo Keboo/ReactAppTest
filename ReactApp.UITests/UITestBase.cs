@@ -117,18 +117,17 @@ public abstract class UITestBase : IAsyncDisposable
     protected virtual async Task AfterTestSetupAsync() { }
 
     [After(Test)]
-    public async Task TearDownAsync()
+    public async Task TearDownAsync(TestContext testContext)
     {
-        await CaptureScreenshotOnFailureAsync();
+        await CaptureScreenshotOnFailureAsync(testContext);
         await DisposeAsync();
     }
 
-    private async Task CaptureScreenshotOnFailureAsync()
+    private async Task CaptureScreenshotOnFailureAsync(TestContext testContext)
     {
         try
         {
-            var testContext = TestContext.Current;
-            if (testContext?.Execution.Result?.Exception is null || Page is null || Page.IsClosed)
+            if (testContext.Execution.Result?.State is not TestState.Failed || Page is null || Page.IsClosed)
                 return;
 
             var screenshotDir = PlaywrightConfiguration.ScreenshotDirectory;
@@ -137,7 +136,7 @@ public abstract class UITestBase : IAsyncDisposable
             var testName = testContext.Metadata.TestName;
             var className = testContext.Metadata.TestDetails.Class.ClassType.FullName;
             var sanitised = string.Join("_", $"{className}.{testName}".Split(Path.GetInvalidFileNameChars()));
-            var screenshotPath = Path.Combine(screenshotDir, $"{sanitised}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.png");
+            var screenshotPath = Path.Combine(screenshotDir, $"{sanitised}_{CreateUniqueId()}.png");
 
             await Page.ScreenshotAsync(new PageScreenshotOptions
             {
