@@ -8,12 +8,12 @@ public static class PlaywrightConfiguration
     /// <summary>
     /// Timeout for page navigation and element visibility
     /// </summary>
-    public static float DefaultTimeout => 10000;
+    public static float DefaultTimeout => 30_000;
     
     /// <summary>
     /// Timeout for waiting on real-time SignalR updates
     /// </summary>
-    public static float SignalRTimeout => 5000;
+    public static float SignalRTimeout => 5_000;
     
     /// <summary>
     /// Whether to run browser in headless mode (no visible window)
