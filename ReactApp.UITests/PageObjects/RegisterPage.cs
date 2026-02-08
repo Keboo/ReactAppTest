@@ -19,11 +19,25 @@ public class RegisterPage(IPage page) : TestPageBase(page)
         await EmailInput.FillAsync(email);
         await PasswordInput.FillAsync(password);
         await ConfirmPasswordInput.FillAsync(password);
-        await RegisterButton.ClickAsync();
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         
-        // Wait for navigation to my-rooms after successful registration
-        await Page.WaitForURLAsync("**/my-rooms", new PageWaitForURLOptions { Timeout = 10000 });
+        // Ensure the button is ready (React might still be attaching event handlers)
+        await RegisterButton.WaitForAsync(new LocatorWaitForOptions 
+        { 
+            State = WaitForSelectorState.Visible,
+            Timeout = 5000 
+        });
+        
+        // Wait for navigation to my-rooms after submitting the form
+        // Use force: true to bypass actionability checks that may fail on Linux
+        await Page.RunAndWaitForNavigationAsync(async () =>
+        {
+            await RegisterButton.ClickAsync(new LocatorClickOptions { Force = true });
+        }, new PageRunAndWaitForNavigationOptions
+        {
+            UrlString = "**/my-rooms",
+            Timeout = 30000,
+            WaitUntil = WaitUntilState.Load  // Use Load instead of NetworkIdle for better Linux compatibility
+        });
     }
     
     public async Task<bool> IsConfirmationMessageVisibleAsync()

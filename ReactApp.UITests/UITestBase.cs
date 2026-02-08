@@ -21,7 +21,8 @@ namespace ReactApp.UITests;
 public abstract class UITestBase : IAsyncDisposable
 {
     private static TimeSpan AspireDefaultTimeout { get; set; } = TimeSpan.FromMinutes(2);
-    private static DistributedApplication _aspireAppHost = null!;
+    private static DistributedApplication? _aspireAppHost = null;
+    private static Uri? _externalFrontendUrl = null;
 
     protected static AxeRunOptions AxeOptions => new()
     {
@@ -53,7 +54,19 @@ public abstract class UITestBase : IAsyncDisposable
 
     protected string? StateId { get; set; }
 
-    protected static Uri FrontendBaseUri => _aspireAppHost.GetEndpoint(Resources.Frontend);
+    protected static Uri FrontendBaseUri
+    {
+        get
+        {
+            if (_externalFrontendUrl is not null)
+                return _externalFrontendUrl;
+            
+            if (_aspireAppHost is null)
+                throw new InvalidOperationException("Neither external frontend URL nor Aspire host is available");
+            
+            return _aspireAppHost.GetEndpoint(Resources.Frontend);
+        }
+    }
 
     protected static CancellationToken CancellationToken =>
         TestContext.Current?.Execution.CancellationToken ?? CancellationToken.None;
@@ -61,6 +74,16 @@ public abstract class UITestBase : IAsyncDisposable
     [Before(TestSession)]
     public static async Task StartAspireHost()
     {
+        // Check if an external frontend URL is provided
+        var externalUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
+        if (!string.IsNullOrWhiteSpace(externalUrl))
+        {
+            _externalFrontendUrl = new Uri(externalUrl);
+            Console.WriteLine($"Using external frontend at: {externalUrl}");
+            Console.WriteLine("Skipping Aspire host creation - using externally running instance");
+            return;
+        }
+
         var appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.ReactApp_AppHost>([], (x, i) =>
             {
@@ -163,6 +186,10 @@ public abstract class UITestBase : IAsyncDisposable
 
     private void StartCollectingLogs()
     {
+        // Skip log collection if using external AppHost
+        if (_aspireAppHost is null)
+            return;
+
         _logLines = new ConcurrentQueue<string>();
         _logCts = new CancellationTokenSource();
 
