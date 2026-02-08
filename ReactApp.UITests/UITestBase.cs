@@ -12,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using ReactApp.AppHost;
-using ReactApp.UITests.PageObjects;
 
 namespace ReactApp.UITests;
 
@@ -145,8 +144,8 @@ public abstract class UITestBase : IAsyncDisposable
 
             var testName = testContext.Metadata.TestName;
             var className = testContext.Metadata.TestDetails.Class.ClassType.FullName;
-            var sanitised = string.Join("_", $"{className}.{testName}".Split(Path.GetInvalidFileNameChars()));
-            var screenshotPath = Path.Combine(screenshotDir, $"{sanitised}_{CreateUniqueId()}.png");
+            var sanitized = string.Join("_", $"{className}.{testName}".Split(Path.GetInvalidFileNameChars()));
+            var screenshotPath = Path.Combine(screenshotDir, $"{sanitized}_{CreateUniqueId()}.png");
 
             await Page.ScreenshotAsync(new PageScreenshotOptions
             {
@@ -218,8 +217,8 @@ public abstract class UITestBase : IAsyncDisposable
 
             var testName = testContext.Metadata.TestName;
             var className = testContext.Metadata.TestDetails.Class.ClassType.FullName;
-            var sanitised = string.Join("_", $"{className}.{testName}".Split(Path.GetInvalidFileNameChars()));
-            var logPath = Path.Combine(logsDir, $"{sanitised}_{CreateUniqueId()}.log");
+            var sanitized = string.Join("_", $"{className}.{testName}".Split(Path.GetInvalidFileNameChars()));
+            var logPath = Path.Combine(logsDir, $"{sanitized}_{CreateUniqueId()}.log");
 
             var sb = new StringBuilder();
             while (_logLines.TryDequeue(out var line))
