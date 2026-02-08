@@ -53,6 +53,7 @@ var frontendApp = builder.AddJavaScriptApp(Resources.Frontend, "../ReactApp.Web"
     .WithHttpEndpoint(env: "PORT")
     .WithExternalHttpEndpoints()
     .WithReference(backend)
+    .WaitFor(backend)
     .WithEnvironment("services__ReactApp-backend__http__0", backend.GetEndpoint("http"))
     .WithEnvironment("services__ReactApp-backend__https__0", backend.GetEndpoint("https"));
 
