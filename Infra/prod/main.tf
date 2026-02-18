@@ -44,11 +44,11 @@ module "container_app_environment" {
 module "backend_container_app" {
   source = "../modules/container_app"
 
-  name                         = "reactapp-${lower(local.environment)}-backend"
-  container_app_environment_id = module.container_app_environment.container_app_environment_id
-  resource_group_name          = azurerm_resource_group.resource_group.name
-  identity_id                  = azurerm_user_assigned_identity.app_identity.id
-  registry_server              = var.acr_login_server
+  name                            = "reactapp-${lower(local.environment)}-backend"
+  container_app_environment_id    = module.container_app_environment.container_app_environment_id
+  resource_group_name             = azurerm_resource_group.resource_group.name
+  identity_id                     = azurerm_user_assigned_identity.app_identity.id
+  container_registry_login_server = var.acr_login_server
 
   env_vars = {
     # Run EF Core migrations on startup for Azure deployments
