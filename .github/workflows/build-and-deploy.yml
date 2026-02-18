@@ -181,11 +181,8 @@ jobs:
         run: |
           az acr login --name ${{ needs.get-infrastructure-outputs.outputs.acr_login_server }}
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t ${{ needs.get-infrastructure-outputs.outputs.acr_login_server }}/reactapp-backend:${{ github.sha }} -t ${{ needs.get-infrastructure-outputs.outputs.acr_login_server }}/reactapp-backend:latest -f ReactApp/Dockerfile .
-          docker push ${{ needs.get-infrastructure-outputs.outputs.acr_login_server }}/reactapp-backend:${{ github.sha }}
-          docker push ${{ needs.get-infrastructure-outputs.outputs.acr_login_server }}/reactapp-backend:latest
+      - name: dotnet publish
+        run: dotnet publish -r linux-x64 --self-contained -t:PublishContainer -p:ContainerRegistry=${{ needs.get-infrastructure-outputs.outputs.acr_login_server }} -p:ContainerImageTags="${{ github.sha }}"
 
       - name: Update Container App
         run: |
