@@ -1,5 +1,5 @@
 class ApiClient {
-  private baseUrl = ''
+  private baseUrl = __API_BASE_URL__ || ''
 
   async get<T>(url: string): Promise<T> {
     const response = await fetch(this.baseUrl + url, {

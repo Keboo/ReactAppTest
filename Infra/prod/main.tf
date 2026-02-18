@@ -55,9 +55,11 @@ module "backend_container_app" {
     RunMigrationsOnStartup = "true"
     # Aspire uses ConnectionStrings__<key> naming convention
     ConnectionStrings__Database = module.sql.connection_string
+    # CORS: Allow the Static Web App origin
+    AllowedOrigins__0 = "https://${module.static_web_app.default_host_name}"
   }
 
-  depends_on = [module.sql]
+  depends_on = [module.sql, module.static_web_app]
 }
 
 module "static_web_app" {
@@ -70,15 +72,7 @@ module "static_web_app" {
     size = "Free"
   }
 
-  app_settings = {
-    # Backend API URL for the frontend to connect to
-    # Uses Aspire service discovery naming convention for consistency
-    BACKEND_URL = "https://${module.backend_container_app.fqdn}"
-  }
-
   tags = local.tags
-
-  depends_on = [module.backend_container_app]
 }
 
 module "sql" {

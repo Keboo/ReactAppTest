@@ -8,7 +8,9 @@ import path from 'path'
 // For a service named "ReactApp-backend", it would be services__ReactApp-backend__https__0 or services__ReactApp-backend__http__0
 // On Linux, Aspire may use REACTAPP_BACKEND_HTTP format instead
 // Prefer HTTP to avoid dev-certificate trust issues (especially in CI environments)
-const backendUrl = process.env['services__ReactApp-backend__http__0'] 
+// BACKEND_URL is set in production builds via CI/CD (from Terraform outputs)
+const backendUrl = process.env.BACKEND_URL
+  || process.env['services__ReactApp-backend__http__0'] 
   || process.env['services__ReactApp-backend__https__0'] 
   || process.env.REACTAPP_BACKEND_HTTP
   || process.env.REACTAPP_BACKEND_HTTPS  
