@@ -5,6 +5,7 @@
     <OutputType>Exe</OutputType>
     <IsTestProject>true</IsTestProject>
     <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
     <EnableMSTestRunner>true</EnableMSTestRunner>
   </PropertyGroup>
 

@@ -189,7 +189,7 @@ jobs:
           az containerapp update \
             --name ${{ needs.get-infrastructure-outputs.outputs.backend_container_app_name }} \
             --resource-group ${{ needs.get-infrastructure-outputs.outputs.resource_group_name }} \
-            --image ${{ needs.get-infrastructure-outputs.outputs.acr_login_server }}/reactapp-backend:${{ github.sha }}
+            --image ${{ needs.get-infrastructure-outputs.outputs.acr_login_server }}/reactapp:${{ github.sha }}
 
   # Deploy frontend to Azure Static Web Apps
   deploy-frontend:
