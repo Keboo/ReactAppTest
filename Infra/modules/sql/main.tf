@@ -101,7 +101,6 @@ resource "terraform_data" "setup_users" {
 
   provisioner "local-exec" {
     command = <<-EOT
-    $ErrorActionPreference = 'Stop'
     $currentIp = '${data.http.my_ip.response_body}'
     $ipRuleName = 'TerraformTemp-AllowCurrentIP'
     # The special "AllowAllWindowsAzureIps" rule (0.0.0.0-0.0.0.0) allows Azure
@@ -110,8 +109,10 @@ resource "terraform_data" "setup_users" {
     $azureRuleName = 'AllowAllWindowsAzureIps'
     
     #Ensure the SqlServer module is available for the Invoke-Sqlcmd command
-    Install-Module -Name SqlServer -AcceptLicense -Force
+    Install-Module -Name SqlServer -AcceptLicense -Force -ErrorAction SilentlyContinue
+    Import-Module SqlServer -ErrorAction Stop
 
+    $ErrorActionPreference = 'Stop'
     try {
       # Create temporary firewall rule for the runner's public IP (for self-hosted runners)
       Write-Host "Creating temporary firewall rule for IP: $currentIp"
