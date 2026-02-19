@@ -1,6 +1,9 @@
 locals {
   connection_string = "Server=tcp:${azurerm_mssql_server.sql_server.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.database.name};Encrypt=True;TrustServerCertificate=False;Connection Timeout=120;Authentication=\"Active Directory Default\";"
 
+  # Connection string without auth - used with explicit access token in provisioner
+  connection_string_no_auth = "Server=tcp:${azurerm_mssql_server.sql_server.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.database.name};Encrypt=True;TrustServerCertificate=False;Connection Timeout=120;"
+
   db_permissions = [
     "db_datareader",
     "db_datawriter",
@@ -142,7 +145,14 @@ resource "terraform_data" "setup_users" {
     "@
       
       Write-Host "Configuring database user: ${each.value}"
-      Invoke-Sqlcmd -ConnectionString '${local.connection_string}' -Query $sql
+      # Use az CLI token directly - DefaultAzureCredential fails on GitHub runners
+      # because azure/login sets AZURE_CLIENT_ID, causing ManagedIdentityCredential
+      # to attempt user-assigned MI auth against IMDS, which hard-fails.
+      $token = az account get-access-token --resource https://database.windows.net/ --query accessToken -o tsv
+      if ($LASTEXITCODE -ne 0 -or -not $token) {
+        throw "Failed to acquire access token for SQL database"
+      }
+      Invoke-Sqlcmd -ConnectionString '${local.connection_string_no_auth}' -AccessToken $token -Query $sql
     }
     finally {
       # Always remove the temporary firewall rule
