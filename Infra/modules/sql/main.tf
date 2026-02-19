@@ -197,6 +197,9 @@ resource "terraform_data" "setup_users" {
         --yes `
         2>$null
     }
+    # Ensure the process exits with 0 if the try block succeeded.
+    # az delete in finally may set a non-zero $LASTEXITCODE which pwsh uses as its exit code.
+    exit 0
   EOT
 
     interpreter = ["pwsh", "-Command"]
