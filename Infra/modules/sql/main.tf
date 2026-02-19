@@ -157,11 +157,5 @@ resource "terraform_data" "setup_users" {
   EOT
 
     interpreter = ["pwsh", "-Command"]
-
-    # https://learn.microsoft.com/sql/tools/sqlcmd/sqlcmd-authentication?view=sql-server-ver16&tabs=go&WT.mc_id=DT-MVP-5003472#activedirectorydefault
-    environment = {
-      "AZURE_CLIENT_ID" = "${data.azurerm_client_config.current.client_id}"
-      "AZURE_TENANT_ID" = "${data.azurerm_client_config.current.tenant_id}"
-    }
   }
 }
