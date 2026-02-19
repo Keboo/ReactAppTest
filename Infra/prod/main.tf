@@ -84,6 +84,6 @@ module "sql" {
   database_name = "reactapp-${lower(local.environment)}-db"
   
   tags            = local.tags
-  users           = []
+  users           = [azurerm_user_assigned_identity.app_identity.name]
   sql_admin_group = azuread_group.admins_group
 }
