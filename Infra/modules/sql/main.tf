@@ -142,21 +142,21 @@ resource "terraform_data" "setup_users" {
       
       # Execute SQL to create user and assign permissions
       $sql = @"
-    -- Create user if they don't exist
+      -- Create user if they don't exist
       IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = '${each.value}')
-    BEGIN
+      BEGIN
         CREATE USER [${each.value}] FROM EXTERNAL PROVIDER;
-    END;
+      END;
 
-    -- Enforce dbo as the default schema
-    ALTER USER [${each.value}] WITH DEFAULT_SCHEMA = [dbo];
+      -- Enforce dbo as the default schema
+      ALTER USER [${each.value}] WITH DEFAULT_SCHEMA = [dbo];
 
-    -- Add user to database roles
+      -- Add user to database roles
       ${join("\n", [for role in local.db_permissions : "ALTER ROLE ${role} ADD MEMBER [${each.value}];"])}
 
-    -- Grant execute permissions for stored procedures
-    GRANT EXECUTE TO [${each.value}];
-    "@
+      -- Grant execute permissions for stored procedures
+      GRANT EXECUTE TO [${each.value}];
+      "@
       
       Write-Host "Configuring database user: ${each.value}"
       # Use az CLI token directly - DefaultAzureCredential fails on GitHub runners
@@ -168,9 +168,17 @@ resource "terraform_data" "setup_users" {
       }
       Invoke-Sqlcmd -ConnectionString '${local.connection_string_no_auth}' -AccessToken $token -Query $sql
     }
+    catch {
+      Write-Host "ERROR: $_"
+      Write-Host $_.Exception.Message
+      Write-Host $_.ScriptStackTrace
+      throw
+    }
     finally {
       # Always remove the temporary firewall rules
+      # Use -ErrorAction SilentlyContinue to prevent cleanup failures from masking the real error
       Write-Host "Removing temporary firewall rules"
+      $ErrorActionPreference = 'SilentlyContinue'
       az sql server firewall-rule delete `
         --resource-group '${var.resource_group.name}' `
         --server '${var.server_name}' `
