@@ -103,27 +103,41 @@ resource "terraform_data" "setup_users" {
     command = <<-EOT
     $ErrorActionPreference = 'Stop'
     $currentIp = '${data.http.my_ip.response_body}'
-    $ruleName = 'TerraformTemp-AllowCurrentIP'
+    $ipRuleName = 'TerraformTemp-AllowCurrentIP'
+    # The special "AllowAllWindowsAzureIps" rule (0.0.0.0-0.0.0.0) allows Azure
+    # services to connect. Needed because GitHub-hosted runners route traffic
+    # through Azure backbone with different IPs than their public IP.
+    $azureRuleName = 'AllowAllWindowsAzureIps'
     
     #Ensure the SqlServer module is available for the Invoke-Sqlcmd command
     Install-Module -Name SqlServer -AcceptLicense -Force
 
     try {
-      # Create temporary firewall rule
+      # Create temporary firewall rule for the runner's public IP (for self-hosted runners)
       Write-Host "Creating temporary firewall rule for IP: $currentIp"
       az sql server firewall-rule create `
         --resource-group '${var.resource_group.name}' `
         --server '${var.server_name}' `
-        --name $ruleName `
+        --name $ipRuleName `
         --start-ip-address $currentIp `
         --end-ip-address $currentIp `
+        --output none
+
+      # Also allow Azure services (for GitHub-hosted runners that use Azure backbone IPs)
+      Write-Host "Enabling 'Allow Azure services' firewall rule"
+      az sql server firewall-rule create `
+        --resource-group '${var.resource_group.name}' `
+        --server '${var.server_name}' `
+        --name $azureRuleName `
+        --start-ip-address '0.0.0.0' `
+        --end-ip-address '0.0.0.0' `
         --output none
       
       if ($LASTEXITCODE -ne 0) {
         throw "Failed to create firewall rule"
       }
       
-      # Wait a moment for the rule to propagate
+      # Wait a moment for the rules to propagate
       Start-Sleep -Seconds 5
       
       # Execute SQL to create user and assign permissions
@@ -155,12 +169,18 @@ resource "terraform_data" "setup_users" {
       Invoke-Sqlcmd -ConnectionString '${local.connection_string_no_auth}' -AccessToken $token -Query $sql
     }
     finally {
-      # Always remove the temporary firewall rule
-      Write-Host "Removing temporary firewall rule"
+      # Always remove the temporary firewall rules
+      Write-Host "Removing temporary firewall rules"
       az sql server firewall-rule delete `
         --resource-group '${var.resource_group.name}' `
         --server '${var.server_name}' `
-        --name $ruleName `
+        --name $ipRuleName `
+        --yes `
+        2>$null
+      az sql server firewall-rule delete `
+        --resource-group '${var.resource_group.name}' `
+        --server '${var.server_name}' `
+        --name $azureRuleName `
         --yes `
         2>$null
     }
