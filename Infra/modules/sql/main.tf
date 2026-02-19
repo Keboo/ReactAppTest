@@ -102,6 +102,9 @@ resource "terraform_data" "setup_users" {
     $currentIp = '${data.http.my_ip.response_body}'
     $ruleName = 'TerraformTemp-AllowCurrentIP'
     
+    #Ensure the SqlServer module is available for the Invoke-Sqlcmd command
+    Install-Module -Name SqlServer -AcceptLicense -Force
+
     try {
       # Create temporary firewall rule
       Write-Host "Creating temporary firewall rule for IP: $currentIp"
