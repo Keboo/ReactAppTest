@@ -16,6 +16,10 @@ permissions:
   id-token: write
   contents: read
 
+defaults:
+  run:
+    shell: pwsh
+
 env:
   DOTNET_VERSION: '10.0.x'
   NODE_VERSION: '20.x'
@@ -66,7 +70,11 @@ jobs:
         run: dotnet tool restore
 
       - name: Check for Pending Database Changes
-        run: dotnet ef migrations has-pending-model-changes --configuration Release --project ReactApp.Data/ReactApp.Data.csproj
+        run: |
+          dotnet ef migrations has-pending-model-changes `
+            --configuration Release `
+            --project ReactApp.Data/ReactApp.Data.csproj `
+           --startup-project ReactApp.AppHost/ReactApp.AppHost.csproj
 
       - name: Install Playwright browsers
         run: pwsh ReactApp.UITests/bin/Release/net10.0/playwright.ps1 install --with-deps
@@ -99,7 +107,14 @@ jobs:
 
       - name: Build Database Bundle
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-        run: dotnet ef migrations bundle --self-contained --no-build --configuration Release --project ReactApp.Data/ReactApp.Data.csproj --output efbundle
+        run: |
+          dotnet ef migrations bundle `
+            --self-contained `
+            --no-build `
+            --configuration Release `
+            --project ReactApp.Data/ReactApp.Data.csproj `
+            --startup-project .\ReactApp.AppHost\ReactApp.AppHost.csproj `
+            --output efbundle
 
       - name: Upload DB Migration
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
