@@ -183,6 +183,7 @@ jobs:
       - name: Get Terraform Outputs
         id: terraform-outputs
         working-directory: Infra
+        shell: bash
         run: |
           echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
           echo "backend_container_app_name=$(terraform output -raw backend_container_app_name)" >> $GITHUB_OUTPUT
