@@ -221,7 +221,9 @@ jobs:
         shell: bash
         run: |
           chmod +x efbundle
-          ./efbundle --connection "${{ needs.get-infrastructure-outputs.outputs.database_connection_string }}"
+          CONNECTION_STRING="${{ needs.get-infrastructure-outputs.outputs.database_connection_string }}"
+          CONNECTION_STRING="${CONNECTION_STRING//\"/\\\"}"
+          ./efbundle --connection "$CONNECTION_STRING"
           rm efbundle
 
 
@@ -250,9 +252,9 @@ jobs:
 
       - name: Update Container App
         run: |
-          az containerapp update \
-            --name ${{ needs.get-infrastructure-outputs.outputs.backend_container_app_name }} \
-            --resource-group ${{ needs.get-infrastructure-outputs.outputs.resource_group_name }} \
+          az containerapp update `
+            --name ${{ needs.get-infrastructure-outputs.outputs.backend_container_app_name }} `
+            --resource-group ${{ needs.get-infrastructure-outputs.outputs.resource_group_name }} `
             --image ${{ needs.get-infrastructure-outputs.outputs.acr_login_server }}/reactapp:${{ github.sha }}
 
   # Deploy frontend to Azure Static Web Apps
