@@ -221,7 +221,8 @@ jobs:
       - name: Apply Migration
         run: |
           chmod +x efbundle
-          ./efbundle --connection '${{ needs.get-infrastructure-outputs.outputs.database_connection_string }}'
+          $env:ConnectionStrings__Database = '${{ needs.get-infrastructure-outputs.outputs.database_connection_string }}'
+          ./efbundle
           rm efbundle
 
 
