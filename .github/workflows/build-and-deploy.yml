@@ -122,6 +122,7 @@ jobs:
         with:
           name: DatabaseMigration
           path: 'efbundle'
+          retention-days: 1
 
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
@@ -218,12 +219,9 @@ jobs:
           subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
 
       - name: Apply Migration
-        shell: bash
         run: |
           chmod +x efbundle
-          CONNECTION_STRING="${{ needs.get-infrastructure-outputs.outputs.database_connection_string }}"
-          CONNECTION_STRING="${CONNECTION_STRING//\"/\\\"}"
-          ./efbundle --connection "$CONNECTION_STRING"
+          ./efbundle --connection '${{ needs.get-infrastructure-outputs.outputs.database_connection_string }}'
           rm efbundle
 
 
