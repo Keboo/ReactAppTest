@@ -53,6 +53,7 @@ module "backend_container_app" {
   env_vars = {
     # Run EF Core migrations on startup for Azure deployments
     RunMigrationsOnStartup = "true"
+    AZURE_CLIENT_ID        = azurerm_user_assigned_identity.app_identity.client_id
     # Aspire uses ConnectionStrings__<key> naming convention
     ConnectionStrings__Database = module.sql.connection_string
     # CORS: Allow the Static Web App origin
@@ -82,7 +83,7 @@ module "sql" {
 
   server_name   = "reactapp-${lower(local.environment)}-sqlserver"
   database_name = "reactapp-${lower(local.environment)}-db"
-  
+
   tags            = local.tags
   users           = [azurerm_user_assigned_identity.app_identity.name]
   sql_admin_group = azuread_group.admins_group

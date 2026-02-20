@@ -27,7 +27,7 @@ resource "azurerm_container_app" "app" {
     max_replicas = var.max_replicas
 
     container {
-      name = var.name
+      name   = var.name
       image  = "${var.container_registry_login_server}/crccheck/hello-world:latest"
       cpu    = var.cpu
       memory = var.memory
