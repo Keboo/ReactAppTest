@@ -4,8 +4,8 @@ locals {
   }
 
   # TODO: Review and adjust variables as needed for your project
-  location = "westus2"
-  environment =  random_pet.environment.id
+  location    = "westus2"
+  environment = random_pet.environment.id
 }
 
 

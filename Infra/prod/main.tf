@@ -51,9 +51,7 @@ module "backend_container_app" {
   container_registry_login_server = var.acr_login_server
 
   env_vars = {
-    # Run EF Core migrations on startup for Azure deployments
-    RunMigrationsOnStartup = "true"
-    AZURE_CLIENT_ID        = azurerm_user_assigned_identity.app_identity.client_id
+    AZURE_CLIENT_ID = azurerm_user_assigned_identity.app_identity.client_id
     # Aspire uses ConnectionStrings__<key> naming convention
     ConnectionStrings__Database = module.sql.connection_string
     # CORS: Allow the Static Web App origin
