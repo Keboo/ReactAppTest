@@ -78,7 +78,7 @@ export default function MyRooms() {
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" mt={4}>
-        <CircularProgress />
+        <CircularProgress aria-label="Loading" />
       </Box>
     )
   }
