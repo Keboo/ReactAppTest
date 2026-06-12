@@ -141,7 +141,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: fastify/github-action-merge-dependabot@v3.12.0
+      - uses: fastify/github-action-merge-dependabot@v3.13.0
 
   # Get infrastructure outputs from Terraform state
   get-infrastructure-outputs:
