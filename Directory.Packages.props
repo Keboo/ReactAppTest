@@ -5,12 +5,12 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Aspire.Hosting.Azure" Version="13.1.2" />
-    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.1.2" />
-    <PackageVersion Include="Aspire.Hosting.Azure.Sql" Version="13.1.2" />
-    <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.1.2" />
-    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.1.2" />
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.1.2" />
+    <PackageVersion Include="Aspire.Hosting.Azure" Version="13.5.3" />
+    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.5.3" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Sql" Version="13.5.3" />
+    <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.5.3" />
+    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.5.3" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.5.3" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />
     <PackageVersion Include="Deque.AxeCore.Playwright" Version="4.13.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
@@ -33,8 +33,8 @@
     </PackageVersion>
     <PackageVersion Include="Moq.AutoMock" Version="4.0.3" />
     <PackageVersion Include="TUnit" Version="1.65.68" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
